@@ -2,7 +2,6 @@ echo "Instalando BIND9..."
 sudo apt update
 sudo apt install -y bind9 bind9utils bind9-doc
 
-echo "Configurando zona DNS..."
 sudo mkdir -p /etc/bind/zones
 cat <<EOF | sudo tee /etc/bind/named.conf.local
 zone "dalvik.xyz" {
@@ -15,6 +14,9 @@ zone "1.168.192.in-addr.arpa" {
     file "/etc/bind/zones/db.192.168.1";
 };
 EOF
+
+sudo chown bind:bind /etc/bind/zones
+sudo chmod 750 /etc/bind/zones
 
 cat <<EOF | sudo tee /etc/bind/zones/db.dalvik.xyz
 \$TTL 604800
@@ -30,8 +32,8 @@ cat <<EOF | sudo tee /etc/bind/zones/db.dalvik.xyz
 @       IN      MX      10 mail.dalvik.xyz.
 dns     IN      A       192.168.1.102
 mail    IN      A       192.168.1.103
-pop     IN      A       192.168.1.104
-web     IN      A       192.168.1.105
+pop     IN      A       192.168.1.103
+web     IN      A       192.168.1.104
 EOF
 
 cat <<EOF | sudo tee /etc/bind/zones/db.192.168.1
@@ -45,11 +47,25 @@ cat <<EOF | sudo tee /etc/bind/zones/db.192.168.1
 ;
 
 @       IN      NS      dns.dalvik.xyz.
-2       IN      PTR     dns.dalvik.xyz.
-3       IN      PTR     mail.dalvik.xyz.
-4       IN      PTR     pop.dalvik.xyz.
-5       IN      PTR     web.dalvik.xyz.
+102       IN      PTR     dns.dalvik.xyz.
+103       IN      PTR     mail.dalvik.xyz.
+103       IN      PTR     pop.dalvik.xyz.
+104       IN      PTR     web.dalvik.xyz.
+EOF
+
+cat <<EOF | sudo tee /etc/bind/named.conf.options
+options {
+        directory "/var/cache/bind";
+        listen-on { any; };
+        allow-query { localhost; 192.168.1.0/24; };
+        allow-recursion { localhost; 192.168.1.0/24; };
+        forwarders {
+                8.8.8.8;
+                8.8.4.4;
+        };
+        listen-on-v6 { none; };
+        dnssec-validation no;
+};
 EOF
 
 sudo systemctl restart bind9
-echo "BIND9 configurado con éxito."

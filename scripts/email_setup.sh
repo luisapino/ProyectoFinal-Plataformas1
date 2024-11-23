@@ -26,7 +26,7 @@ echo "yustes:pass" | sudo chpasswd
 
 sudo apt install -y bsd-mailx
 
-sudo cat /var/long/mail.log 
+sudo cat /var/log/mail.log 
 
 sudo rm /etc/postfix/main.cf
 sudo tee /etc/postfix/main.cf > /dev/null <<EOF
@@ -66,3 +66,26 @@ sudo systemctl restart postfix
 sudo systemctl enable postfix
 
 sudo systemctl status postfix --no-pager
+
+
+sudo apt install -y dovecot-pop3d dovecot-imapd
+sudo tee /etc/dovecot/conf.d/10-auth.conf > /dev/null <<EOF
+disable_plaintext_auth = no
+auth_mechanisms = plain
+!include auth-system.conf.ext
+EOF
+
+sudo tee /etc/dovecot/conf.d/10-mail.conf > /dev/null <<EOF
+mail_location = maildir:~/Maildir
+namespace inbox {
+  inbox = yes
+}
+mail_privileged_group = mail
+protocol !indexer-worker {
+}
+EOF
+
+sudo systemctl restart dovecot
+sudo systemctl enable dovecot
+
+sudo systemctl status dovecot --no-pager
