@@ -68,13 +68,16 @@ sudo systemctl enable postfix
 sudo systemctl status postfix --no-pager
 
 
-sudo apt install -y dovecot-pop3d dovecot-imapd
+sudo apt install -y dovecot-pop3d
+
+sudo rm /etc/dovecot/conf.d/10-auth.conf
 sudo tee /etc/dovecot/conf.d/10-auth.conf > /dev/null <<EOF
 disable_plaintext_auth = no
 auth_mechanisms = plain
 !include auth-system.conf.ext
 EOF
 
+sudo rm /etc/dovecot/conf.d/10-mail.conf
 sudo tee /etc/dovecot/conf.d/10-mail.conf > /dev/null <<EOF
 mail_location = maildir:~/Maildir
 namespace inbox {

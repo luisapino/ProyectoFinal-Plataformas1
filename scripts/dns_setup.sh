@@ -15,43 +15,46 @@ zone "1.168.192.in-addr.arpa" {
 };
 EOF
 
-sudo chown bind:bind /etc/bind/zones
-sudo chmod 750 /etc/bind/zones
-
 cat <<EOF | sudo tee /etc/bind/zones/db.dalvik.xyz
-\$TTL 604800
-@       IN      SOA     dns.dalvik.xyz. admin.dalvik.xyz. (
-                        2         ; Serial
-                        604800    ; Refresh
-                        86400     ; Retry
-                        2419200   ; Expire
-                        604800 )  ; Negative Cache TTL
-;
-
-@       IN      NS      dns.dalvik.xyz.
-@       IN      MX      10 mail.dalvik.xyz.
-dns     IN      A       192.168.1.102
-mail    IN      A       192.168.1.103
-pop     IN      A       192.168.1.103
-web     IN      A       192.168.1.104
+\$ORIGIN .
+\$TTL 86400      ; 1 day
+dalvik.xyz            IN SOA  dalvik.xyz. root.dalvik.xyz. (
+                                3 ; serial
+                                604800     ; refresh (1 week)
+                                86400      ; retry (1 day)
+                                2419200    ; expire (4 weeks)
+                                86400      ; minimum (1 day)
+                                )
+                        NS      dns.dalvik.xyz.
+dalvik.xyz.             IN MX 10  mail.dalvik.xyz.
+\$ORIGIN dalvik.xyz.
+\$TTL 300        ; 5 minutes
+dns                      A      192.168.1.102
+web                      A      192.168.1.104
+mail               A      192.168.1.103
+pop3  IN CNAME mail
+smtp  IN CNAME mail
 EOF
+
 
 cat <<EOF | sudo tee /etc/bind/zones/db.192.168.1
-\$TTL 604800
-@       IN      SOA     dns.dalvik.xyz. admin.dalvik.xyz. (
-                        2         ; Serial
-                        604800    ; Refresh
-                        86400     ; Retry
-                        2419200   ; Expire
-                        604800 )  ; Negative Cache TTL
-;
-
-@       IN      NS      dns.dalvik.xyz.
-102       IN      PTR     dns.dalvik.xyz.
-103       IN      PTR     mail.dalvik.xyz.
-103       IN      PTR     pop.dalvik.xyz.
-104       IN      PTR     web.dalvik.xyz.
+\$ORIGIN .
+\$TTL 86400      ; 1 day
+1.168.192.in-addr.arpa    IN SOA  dalvik.xyz. root.dalvik.xyz. (
+                                3 ; serial
+                                604800     ; refresh (1 week)
+                                86400      ; retry (1 day)
+                                2419200    ; expire (4 weeks)
+                                86400      ; minimum (1 day)
+                                )
+                        NS      dns.dalvik.xyz.
+\$ORIGIN 1.168.192.in-addr.arpa.
+\$TTL 300        ; 5 minutes
+102                     PTR     dns.dalvik.xyz.
+103                     PTR     mail.dalvik.xyz.
+104                     PTR     web.dalvik.xyz.
 EOF
+
 
 cat <<EOF | sudo tee /etc/bind/named.conf.options
 options {
